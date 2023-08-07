@@ -1,9 +1,9 @@
-use std::cell::RefCell;
 use ndarray::{concatenate, prelude::*};
 use ndarray_rand::{rand_distr::Uniform, RandomExt};
 use ndarray_slice::Slice1Ext;
 use num_complex::{Complex, ComplexFloat};
 use rustfft::FftPlanner;
+use std::cell::RefCell;
 
 use crate::errors::VmdError;
 use crate::utils::array::{fftshift1d, ifftshift1d, Flip};
@@ -12,6 +12,7 @@ thread_local! {
   static FFT_PLANNER: RefCell<FftPlanner<f64>> = RefCell::new(FftPlanner::new());
 }
 
+#[allow(non_snake_case, clippy::type_complexity)]
 /// Description
 /// ---
 /// u,u_hat,omega = VMD(input, alpha, tau, K, DC, init, tol) <br>
@@ -20,7 +21,7 @@ thread_local! {
 /// Original paper: <br>
 /// Dragomiretskiy, K. and Zosso, D. (2014) ‘Variational Mode Decomposition’,  <br>
 /// IEEE Transactions on Signal Processing, 62(3), pp. 531–544. doi: 10.1109/TSP.2013.2288675. <br>
-/// 
+///
 /// Input and Parameters:
 /// ---------------------
 /// input   - the time domain signal (1D) to be decomposed <br>
@@ -38,7 +39,7 @@ thread_local! {
 /// u       - the collection of decomposed modes <br>
 /// u_hat   - spectra of the modes <br>
 /// omega   - estimated mode center-frequencies <br>
-/// 
+///
 pub fn vmd(
     input: &[f64],
     alpha: i32,
@@ -103,11 +104,11 @@ pub fn vmd(
         .map_inplace(|v| *v = Complex::new(0., 0.));
 
     // Initialization of omega k
-    let mut omega_plus = Array::from_shape_fn((N_ITER, K), |(x, y)| 0.);
+    let mut omega_plus = Array::from_shape_fn((N_ITER, K), |(_, _)| 0.);
     match init {
         1 => {
             for i in 0..K {
-                omega_plus[[0, i as usize]] = (0.5 / K as f64) * i as f64
+                omega_plus[[0, i]] = (0.5 / K as f64) * i as f64
             }
         }
         // PY => omega_plus[0,:] = np.sort(np.exp(np.log(fs) + (np.log(0.5)-np.log(fs))*np.random.rand(1,K)))
@@ -144,7 +145,7 @@ pub fn vmd(
 
     // Huge allocs!
     // matrix keeping track of every iterant // could be discarded for mem
-    let mut u_hat_plus: Array3<Complex<f64>> = Array::zeros((ROWS, freqs.len(), K as usize));
+    let mut u_hat_plus: Array3<Complex<f64>> = Array::zeros((ROWS, freqs.len(), K));
     let mut udiff = tol + f64::EPSILON;
     let mut n = 0;
     let mut sum_uk: Array1<Complex<f64>> = Array::zeros(freqs.len());
@@ -156,7 +157,7 @@ pub fn vmd(
     let mut prev: usize;
 
     // For future generalizations: individual alpha for each mode
-    let alpha: Array1<f64> = Array::ones([K as usize]) * alpha as f64;
+    let alpha: Array1<f64> = Array::ones(K) * alpha as f64;
 
     // Main loop for iterative updates
     while udiff > tol && n < N_ITER - 1 {
@@ -216,7 +217,7 @@ pub fn vmd(
         expr1.move_into(lambda_hat.slice_mut(s![n + 1, ..]));
 
         // loop counters
-        n = n + 1;
+        n += 1;
         cur = n % ROWS;
         next = (n + 1) % ROWS;
         prev = (n - 1) % ROWS;
@@ -227,7 +228,7 @@ pub fn vmd(
             let expr2 = expr1.map(|f| f.conj());
             let expr = expr1.dot(&expr2) * (1. / T as f64);
 
-            udiff_ = udiff_ + expr;
+            udiff_ += expr;
         }
         udiff = ComplexFloat::abs(udiff_);
     }

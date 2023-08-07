@@ -1,4 +1,4 @@
-use ndarray::{s, ArrayBase, ArrayView1, Axis, Data, DataMut, Ix1, OwnedRepr};
+use ndarray::{s, ArrayBase, ArrayView1, Axis, Data, Ix1, OwnedRepr};
 
 pub trait Flip<A, S> {
     fn flip(&self) -> ArrayView1<A>;
