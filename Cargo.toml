@@ -10,6 +10,7 @@ readme = "README.md"
 
 repository = "https://github.com/jiafuei/vmd-rs"
 description = "Variational mode decomoposition in Rust"
+keywords = ["fft", "fourier", "signal", "processing"]
 
 [lib]
 name = "vmd_rs"
