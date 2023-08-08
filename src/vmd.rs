@@ -141,17 +141,19 @@ pub fn vmd(
 
     // Huge allocs here
     // start with empty dual variables
-    let mut lambda_hat: Array2<Complex<f64>> = Array::zeros((N_ITER, freqs.len()));
+
+    // optimization: only need 2 rows, but we use 3 because its simpler to write
+    const ROWS: usize = 3;
+    let mut lambda_hat: Array2<Complex<f64>> = Array::zeros((ROWS, freqs.len()));
 
     // Huge allocs!
     // matrix keeping track of every iterant // could be discarded for mem
+    // optimization: use only 3 rows
     let mut u_hat_plus: Array3<Complex<f64>> = Array::zeros((ROWS, freqs.len(), K));
     let mut udiff = tol + f64::EPSILON;
     let mut n = 0;
     let mut sum_uk: Array1<Complex<f64>> = Array::zeros(freqs.len());
 
-    // optimization: use only 3 rows
-    const ROWS: usize = 3;
     let mut cur: usize = 0; // n % ROWS
     let mut next: usize = 1; // (n+1) % ROWS
     let mut prev: usize;
@@ -172,8 +174,8 @@ pub fn vmd(
         sum_uk -= &s2;
 
         // Update spectrum of first mode through Wiener filter of residuals
-        let subexpr1 = &lambda_hat.slice(s![n, ..]) / Complex::new(2., 0.);
-        let lexpr = &f_hat_plus - &sum_uk - subexpr1;
+        let lambda_hat_slice = &lambda_hat.slice(s![cur, ..]) / Complex::new(2., 0.);
+        let lexpr = &f_hat_plus - &sum_uk - &lambda_hat_slice;
         let rexpr = 1. + alpha[k] * (&freqs - omega_plus[[n, k]]).map_mut(|f| f.powi(2));
         (lexpr / rexpr).move_into(u_hat_plus.slice_mut(s![next, .., k]));
 
@@ -193,8 +195,8 @@ pub fn vmd(
             sum_uk -= &u_hat_plus.slice(s![cur, .., k]);
 
             // mode spectrum
-            let lexpr = &lambda_hat.slice(s![n, ..]) / Complex::new(2., 0.);
-            let lexpr = &f_hat_plus - &sum_uk - lexpr;
+            // let lexpr = &lambda_hat.slice(s![cur, ..]) / Complex::new(2., 0.);
+            let lexpr = &f_hat_plus - &sum_uk - &lambda_hat_slice;
             let rexpr = 1. + alpha[k] * (&freqs - omega_plus[[n, k]]).map(|v| v.powi(2));
             (lexpr / rexpr).move_into(u_hat_plus.slice_mut(s![next, .., k]));
 
@@ -214,7 +216,7 @@ pub fn vmd(
             - &f_hat_plus)
             * tau as f64;
         let expr1 = &lambda_hat.slice(s![cur, ..]) + expr1;
-        expr1.move_into(lambda_hat.slice_mut(s![n + 1, ..]));
+        expr1.move_into(lambda_hat.slice_mut(s![next, ..]));
 
         // loop counters
         n += 1;
