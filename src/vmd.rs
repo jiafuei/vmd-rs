@@ -71,6 +71,7 @@ pub fn vmd(
     let t_len = t.len();
     let freqs = t - 0.5 - (1. / T);
     const N_ITER: usize = 500;
+    const ROWS: usize = 2;
 
     // Construct and center f_hat
     let fft_fhat = {
@@ -142,13 +143,12 @@ pub fn vmd(
     // Huge allocs here
     // start with empty dual variables
 
-    // optimization: only need 2 rows, but we use 3 because its simpler to write
-    const ROWS: usize = 3;
+    // optimization: only need 2 rows
     let mut lambda_hat: Array2<Complex<f64>> = Array::zeros((ROWS, freqs.len()));
 
     // Huge allocs!
     // matrix keeping track of every iterant // could be discarded for mem
-    // optimization: use only 3 rows
+    // optimization: use only 2 rows
     let mut u_hat_plus: Array3<Complex<f64>> = Array::zeros((ROWS, freqs.len(), K));
     let mut udiff = tol + f64::EPSILON;
     let mut n = 0;
@@ -218,25 +218,26 @@ pub fn vmd(
         let expr1 = &lambda_hat.slice(s![cur, ..]) + expr1;
         expr1.move_into(lambda_hat.slice_mut(s![next, ..]));
 
-        // loop counters
-        n += 1;
-        cur = n % ROWS;
-        next = (n + 1) % ROWS;
-        prev = (n - 1) % ROWS;
-
         let mut udiff_ = Complex::new(f64::EPSILON, 0.);
         for i in 0..K {
-            let expr1 = &u_hat_plus.slice(s![cur, .., i]) - &u_hat_plus.slice(s![prev, .., i]);
+            let expr1 = &u_hat_plus.slice(s![next, .., i]) - &u_hat_plus.slice(s![cur, .., i]);
             let expr2 = expr1.map(|f| f.conj());
             let expr = expr1.dot(&expr2) * (1. / T as f64);
 
             udiff_ += expr;
         }
         udiff = ComplexFloat::abs(udiff_);
+
+        // loop counters
+        n += 1;
+        cur = n % ROWS;
+        next = (n + 1) % ROWS;
     }
     // Postprocessing and cleanup
     // discard empty space if converged early
     let n_iter = std::cmp::min(n, N_ITER);
+    // let cur = n_iter % ROWS;
+    let prev = (n_iter - 1) % ROWS;
     let omega = omega_plus.slice(s![..n_iter, ..]);
 
     // signal reconstruction (slight optimization)
@@ -246,12 +247,13 @@ pub fn vmd(
     // let idxs = T/2..0;
     let T = T as usize;
     let mut u_hat = Array::from_elem([T, K], Complex::new(0.0, 0.0));
-    u_hat
-        .slice_mut(s![T / 2..T, ..])
-        .assign(&u_hat_plus.slice(s![(n_iter - 1) % ROWS, T / 2..T, ..]));
+    u_hat_plus
+        .slice(s![prev, T / 2..T, ..])
+        .to_owned()
+        .move_into(u_hat.slice_mut(s![T / 2..T, ..]));
     // idxs = 1..T/2+1;-1
     u_hat_plus
-        .slice(s![(n_iter - 1) % ROWS, T / 2..T, ..])
+        .slice(s![prev, T / 2..T, ..])
         .map(|f| f.conj())
         .move_into(u_hat.slice_mut(s![1..T/2+1;-1,..]));
     u_hat
