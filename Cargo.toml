@@ -1,6 +1,6 @@
 [package]
 name = "vmd-rs"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 authors = [
     "\"jiafuei\""
@@ -9,8 +9,8 @@ license = "MIT"
 readme = "README.md"
 
 repository = "https://github.com/jiafuei/vmd-rs"
-description = "Variational mode decomoposition in Rust"
-keywords = ["fft", "fourier", "signal", "processing"]
+description = "Variational Mode Decomoposition in Rust"
+keywords = ["fft", "fourier", "signal-processing", "vmd", "dsp"]
 
 [lib]
 name = "vmd_rs"

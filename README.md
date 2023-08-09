@@ -1,9 +1,9 @@
 vmd-rs
 ---
+VMD, aka Variational Mode Decomposition, is a signal processing tool that decompse the input signal into different band-limited IMFs.
 
-The `vmd-rs` crate decomposes a signal according to the [Variational Mode Decomposition](https://doi.org/10.1109/TSP.2013.2288675) method.
+The implementation of this project is referenced from [vmdpy](https://github.com/vrcarva/vmdpy) with some slight changes.
 
-The implementation is referenced from [vmdpy](https://github.com/vrcarva/vmdpy) with some slight changes.
 
 Highlights
 ---
@@ -16,7 +16,7 @@ Using with cargo
 ---
 ```
 [dependencies]
-vmd-rs = "0.2.0"
+vmd-rs = "0.2.1"
 ```
 
 Enabling BLAS
