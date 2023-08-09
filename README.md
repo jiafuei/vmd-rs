@@ -16,7 +16,7 @@ Using with cargo
 ---
 ```
 [dependencies]
-vmd-rs = "0.1.0"
+vmd-rs = "0.2.0"
 ```
 
 Enabling BLAS
