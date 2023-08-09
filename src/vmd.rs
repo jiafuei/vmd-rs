@@ -42,8 +42,8 @@ thread_local! {
 ///
 pub fn vmd(
     input: &[f64],
-    alpha: i32,
-    tau: i32,
+    alpha: f64,
+    tau: f64,
     K: usize,
     DC: i32,
     init: i32,
@@ -159,7 +159,7 @@ pub fn vmd(
     let mut prev: usize;
 
     // For future generalizations: individual alpha for each mode
-    let alpha: Array1<f64> = Array::ones(K) * alpha as f64;
+    let alpha: Array1<f64> = Array::ones(K) * alpha;
 
     // Main loop for iterative updates
     while udiff > tol && n < N_ITER - 1 {
@@ -214,7 +214,7 @@ pub fn vmd(
             .slice(s![next, .., ..])
             .sum_axis(ndarray::Axis(1))
             - &f_hat_plus)
-            * tau as f64;
+            * tau;
         let expr1 = &lambda_hat.slice(s![cur, ..]) + expr1;
         expr1.move_into(lambda_hat.slice_mut(s![next, ..]));
 

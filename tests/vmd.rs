@@ -14,7 +14,7 @@ fn test_vmd_ok() {
     let expected_omega: ndarray::Array2<f64> =
         ndarray_npy::read_npy("tests/sample/omega.npy").unwrap();
 
-    let (u, u_hat, omega) = vmd(test_input.as_slice().unwrap(), 2000, 0, 4, 0, 1, 1e-7).unwrap();
+    let (u, u_hat, omega) = vmd(test_input.as_slice().unwrap(), 2000., 0., 4, 0, 1, 1e-7).unwrap();
 
     assert_relative_eq!(u, expected_ulong, max_relative = 0.0000000005);
     assert_relative_eq!(omega, expected_omega, max_relative = 0.0000000005);
