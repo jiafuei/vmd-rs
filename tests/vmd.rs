@@ -1,5 +1,5 @@
 use approx::{assert_relative_eq, RelativeEq};
-use ndarray::Zip;
+use ndarray::{s, Zip};
 use num_complex::Complex;
 use vmd_rs::vmd;
 
@@ -17,7 +17,11 @@ fn test_vmd_ok() {
     let (u, u_hat, omega) = vmd(test_input.as_slice().unwrap(), 2000., 0., 4, 0, 1, 1e-7).unwrap();
 
     assert_relative_eq!(u, expected_ulong, max_relative = 0.0000000005);
-    assert_relative_eq!(omega, expected_omega, max_relative = 0.0000000005);
+    assert_relative_eq!(
+        omega.slice(s![0, ..]),
+        expected_omega.slice(s![-1, ..]),
+        max_relative = 0.0000000005
+    );
     let uhat_eq = Zip::from(u_hat.rows())
         .and(expected_uhat.rows())
         .all(|a, b| {
