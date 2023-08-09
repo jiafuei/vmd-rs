@@ -105,7 +105,7 @@ pub fn vmd(
         .map_inplace(|v| *v = Complex::new(0., 0.));
 
     // Initialization of omega k
-    let mut omega_plus = Array::from_shape_fn((N_ITER, K), |(_, _)| 0.);
+    let mut omega_plus = Array::from_shape_fn((ROWS, K), |(_, _)| 0.);
     match init {
         1 => {
             for i in 0..K {
@@ -175,7 +175,7 @@ pub fn vmd(
         // Update spectrum of first mode through Wiener filter of residuals
         let lambda_hat_slice = &lambda_hat.slice(s![cur, ..]) / Complex::new(2., 0.);
         let lexpr = &f_hat_plus - &sum_uk - &lambda_hat_slice;
-        let rexpr = 1. + alpha[k] * (&freqs - omega_plus[[n, k]]).map_mut(|f| f.powi(2));
+        let rexpr = 1. + alpha[k] * (&freqs - omega_plus[[cur, k]]).map_mut(|f| f.powi(2));
         (lexpr / rexpr).move_into(u_hat_plus.slice_mut(s![next, .., k]));
 
         if DC == 0 {
@@ -184,7 +184,7 @@ pub fn vmd(
             let expr2 = subexpr2.map(|f| ComplexFloat::abs(*f).powi(2));
             let expr1: f64 = expr1.dot(&expr2);
             let expr2 = expr2.sum();
-            omega_plus[[n + 1, k]] = expr1 / expr2;
+            omega_plus[[next, k]] = expr1 / expr2;
         }
 
         // update of any other node
@@ -196,7 +196,7 @@ pub fn vmd(
             // mode spectrum
             // let lexpr = &lambda_hat.slice(s![cur, ..]) / Complex::new(2., 0.);
             let lexpr = &f_hat_plus - &sum_uk - &lambda_hat_slice;
-            let rexpr = 1. + alpha[k] * (&freqs - omega_plus[[n, k]]).map(|v| v.powi(2));
+            let rexpr = 1. + alpha[k] * (&freqs - omega_plus[[cur, k]]).map(|v| v.powi(2));
             (lexpr / rexpr).move_into(u_hat_plus.slice_mut(s![next, .., k]));
 
             // center frequencies
@@ -205,7 +205,7 @@ pub fn vmd(
             let expr2 = subexpr2.map(|f| ComplexFloat::abs(*f).powi(2));
             let expr1: f64 = expr1.dot(&expr2);
             let expr2 = expr2.sum();
-            omega_plus[[n + 1, k]] = expr1 / expr2;
+            omega_plus[[next, k]] = expr1 / expr2;
         }
 
         // dual ascent
@@ -235,8 +235,9 @@ pub fn vmd(
     // Postprocessing and cleanup
     // discard empty space if converged early
     let n_iter = std::cmp::min(n, N_ITER);
+    let cur = n_iter % ROWS;
     let prev = (n_iter - 1) % ROWS;
-    let omega = omega_plus.slice(s![..n_iter, ..]);
+    let omega = omega_plus.slice(s![..cur, ..]);
 
     // signal reconstruction (slight optimization)
 
