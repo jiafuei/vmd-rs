@@ -156,7 +156,6 @@ pub fn vmd(
 
     let mut cur: usize = 0; // n % ROWS
     let mut next: usize = 1; // (n+1) % ROWS
-    let mut prev: usize;
 
     // For future generalizations: individual alpha for each mode
     let alpha: Array1<f64> = Array::ones(K) * alpha;
@@ -236,7 +235,6 @@ pub fn vmd(
     // Postprocessing and cleanup
     // discard empty space if converged early
     let n_iter = std::cmp::min(n, N_ITER);
-    // let cur = n_iter % ROWS;
     let prev = (n_iter - 1) % ROWS;
     let omega = omega_plus.slice(s![..n_iter, ..]);
 
